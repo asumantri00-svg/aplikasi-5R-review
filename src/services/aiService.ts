@@ -1,9 +1,21 @@
 import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { AISummary, ChatMessage, AuditFilePart } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI(): GoogleGenAI {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not set. Please set it in your environment variables.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISummary> {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   
   const prompt = `
@@ -90,6 +102,7 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
 }
 
 export async function chatWithAuditData(history: ChatMessage[], findings: any[]): Promise<string> {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   
   const chat = ai.chats.create({

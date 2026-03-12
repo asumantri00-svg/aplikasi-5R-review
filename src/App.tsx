@@ -55,8 +55,16 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const key = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+    if (!key || key === 'MY_GEMINI_API_KEY') {
+      setApiKeyMissing(true);
+    }
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -103,9 +111,9 @@ export default function App() {
 
       const summary = await analyzeAuditFiles(parts);
       setResult(summary);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Failed to process documents. Please ensure they are valid PDF or PPTX files.");
+      setError(err.message || "Failed to process documents. Please ensure they are valid PDF or PPTX files.");
     } finally {
       setIsProcessing(false);
     }
@@ -123,9 +131,9 @@ export default function App() {
     try {
       const response = await chatWithAuditData(updatedHistory, result.findings);
       setChatHistory(prev => [...prev, { role: 'model', text: response }]);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setChatHistory(prev => [...prev, { role: 'model', text: "Sorry, I encountered an error." }]);
+      setChatHistory(prev => [...prev, { role: 'model', text: `Error: ${err.message || "Sorry, I encountered an error."}` }]);
     } finally {
       setIsChatLoading(false);
     }
@@ -139,6 +147,23 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#1e293b] font-sans">
+      {/* API Key Warning Banner */}
+      {apiKeyMissing && (
+        <div className="bg-amber-50 border-b border-amber-200 px-8 py-3 flex items-center justify-between text-amber-800 text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <X className="text-amber-500" size={16} />
+            <span>API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di pengaturan rahasia (Secrets).</span>
+          </div>
+          <a 
+            href="https://ai.google.dev/gemini-api/docs/api-key" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-amber-700 underline hover:text-amber-900"
+          >
+            Dapatkan API Key
+          </a>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-30">
         <div className="flex items-center gap-3">
