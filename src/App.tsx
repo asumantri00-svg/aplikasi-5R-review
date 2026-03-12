@@ -159,15 +159,6 @@ export default function App() {
       <main className="max-w-[1600px] mx-auto p-8 space-y-8">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-slate-800">Insights</h2>
-          {result && (
-            <button 
-              onClick={handleExport}
-              className="flex items-center gap-2 text-indigo-600 font-semibold text-sm hover:underline"
-            >
-              <Download size={16} />
-              Export Full Excel
-            </button>
-          )}
         </div>
 
         {/* Data Distribution Card */}
@@ -285,10 +276,19 @@ export default function App() {
         {result && (
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                <TableIcon size={18} className="text-slate-400" />
-                Top 10 Findings
-              </h3>
+              <div className="flex items-center gap-6">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                  <TableIcon size={18} className="text-slate-400" />
+                  Top 10 Findings
+                </h3>
+                <button 
+                  onClick={handleExport}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+                >
+                  <Download size={14} />
+                  Export Full Excel
+                </button>
+              </div>
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Showing 10 of {result.findings.length}</span>
             </div>
             <div className="overflow-x-auto">
