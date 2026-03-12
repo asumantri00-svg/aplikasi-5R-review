@@ -1,0 +1,5 @@
+{
+  "name": "Audit Insight AI",
+  "description": "AI-powered tool to extract audit findings from PPTX/PDF and export to Excel with visual summaries.",
+  "requestFramePermissions": []
+}
