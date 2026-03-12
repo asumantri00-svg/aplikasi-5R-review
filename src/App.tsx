@@ -31,9 +31,10 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-import { AISummary, AuditFinding, AUDIT_TABLE_HEADERS, ChatMessage } from './types';
+import { AISummary, AuditFinding, AUDIT_TABLE_HEADERS, ChatMessage, AuditFilePart } from './types';
 import { analyzeAuditFiles, chatWithAuditData } from './services/aiService';
 import { exportToExcel } from './utils/excelExport';
+import { extractTextFromPptx } from './utils/pptxParser';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -76,19 +77,31 @@ export default function App() {
     setShowUploadModal(false);
     
     try {
-      const fileData = await Promise.all(files.map(async (file) => {
-        return new Promise<{ data: string; mimeType: string }>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve({ 
-            data: reader.result as string, 
-            mimeType: file.type || (file.name.endsWith('.pptx') ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' : 'application/pdf')
+      const parts = await Promise.all(files.map(async (file): Promise<AuditFilePart> => {
+        const isPptx = file.name.endsWith('.pptx') || file.name.endsWith('.ppt');
+        
+        if (isPptx) {
+          const text = await extractTextFromPptx(file);
+          return { text: `File: ${file.name}\nContent:\n${text}` };
+        } else {
+          return new Promise<AuditFilePart>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const base64 = (reader.result as string).split(',')[1];
+              resolve({ 
+                inlineData: { 
+                  data: base64, 
+                  mimeType: file.type || 'application/pdf' 
+                } 
+              });
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
           });
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+        }
       }));
 
-      const summary = await analyzeAuditFiles(fileData);
+      const summary = await analyzeAuditFiles(parts);
       setResult(summary);
     } catch (err) {
       console.error(err);

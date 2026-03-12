@@ -1,9 +1,9 @@
 import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
-import { AISummary, ChatMessage } from "../types";
+import { AISummary, ChatMessage, AuditFilePart } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
-export async function analyzeAuditFiles(files: { data: string; mimeType: string }[]): Promise<AISummary> {
+export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISummary> {
   const model = "gemini-3-flash-preview";
   
   const prompt = `
@@ -18,13 +18,6 @@ export async function analyzeAuditFiles(files: { data: string; mimeType: string 
     5. PIC count.
     6. 3 quick insights.
   `;
-
-  const parts = files.map(f => ({
-    inlineData: {
-      data: f.data.split(',')[1],
-      mimeType: f.mimeType
-    }
-  }));
 
   const response = await ai.models.generateContent({
     model,

@@ -18,6 +18,10 @@ export interface AISummary {
   suggestions: string[];
 }
 
+export type AuditFilePart = 
+  | { inlineData: { data: string; mimeType: string } }
+  | { text: string };
+
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
