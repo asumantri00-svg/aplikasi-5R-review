@@ -24,11 +24,11 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
     
     Provide:
     1. List of findings.
-    2. Short 2-sentence summary.
-    3. Category count.
-    4. Area count.
-    5. PIC count.
-    6. 3 quick insights.
+    2. A single paragraph of exactly 5 lines summarizing the overall state and trends.
+    3. 3-5 specific bullet point insights/suggestions for improvement.
+    4. Category count.
+    5. Area count.
+    6. PIC count.
   `;
 
   const response = await ai.models.generateContent({
@@ -57,7 +57,15 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
               required: ["no", "problem", "category", "area", "pic", "rootCause", "action", "dueDate"]
             }
           },
-          summaryText: { type: Type.STRING },
+          summaryText: { 
+            type: Type.STRING,
+            description: "A single paragraph of exactly 5 lines summarizing the data."
+          },
+          suggestions: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "3-5 specific suggestions for improvement."
+          },
           categoryDistribution: {
             type: Type.ARRAY,
             items: {
@@ -87,18 +95,15 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
                 value: { type: Type.NUMBER }
               }
             }
-          },
-          suggestions: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
           }
         },
-        required: ["findings", "summaryText", "categoryDistribution", "areaDistribution", "picDistribution", "suggestions"]
+        required: ["findings", "summaryText", "suggestions", "categoryDistribution", "areaDistribution", "picDistribution"]
       }
     }
   });
 
-  return JSON.parse(response.text || "{}") as AISummary;
+  const data = JSON.parse(response.text || "{}");
+  return data as AISummary;
 }
 
 export async function chatWithAuditData(history: ChatMessage[], findings: any[]): Promise<string> {

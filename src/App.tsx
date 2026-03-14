@@ -146,10 +146,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#1e293b] font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans relative overflow-x-hidden">
+      {/* Background Image with Overlay */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: 'url("https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1920")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px]" />
+      </div>
+
       {/* API Key Warning Banner */}
       {apiKeyMissing && (
-        <div className="bg-amber-50 border-b border-amber-200 px-8 py-3 flex items-center justify-between text-amber-800 text-sm font-medium">
+        <div className="relative z-40 bg-amber-50/90 backdrop-blur-md border-b border-amber-200 px-8 py-3 flex items-center justify-between text-amber-800 text-sm font-medium">
           <div className="flex items-center gap-2">
             <X className="text-amber-500" size={16} />
             <span>API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di pengaturan rahasia (Secrets).</span>
@@ -164,30 +176,27 @@ export default function App() {
           </a>
         </div>
       )}
+
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-30">
+      <header className="relative z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/50 px-8 py-4 flex justify-between items-center sticky top-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
             <LayoutDashboard size={24} />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-slate-800">Dashboard Audit 5R</h1>
         </div>
         <button 
           onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200"
+          className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 hover:scale-105 active:scale-95"
         >
           <Plus size={18} />
-          Upload More
+          Input Data
         </button>
       </header>
 
-      <main className="max-w-[1600px] mx-auto p-8 space-y-8">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-slate-800">Insights</h2>
-        </div>
-
-        {/* Data Distribution Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-8">
+      <main className="relative z-10 max-w-[1600px] mx-auto p-8 space-y-8">
+        {/* Data Distribution Section */}
+        <section className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/50 p-8 shadow-xl shadow-slate-200/50 space-y-8">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
               <BarChart3 size={18} />
@@ -198,7 +207,7 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* By Category - Donut */}
             <div className="space-y-4">
-              <h4 className="text-center text-sm font-semibold text-slate-500 uppercase tracking-wider">By Category</h4>
+              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">By Category</h4>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -217,7 +226,7 @@ export default function App() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)' }}
                     />
                     {result && <Legend verticalAlign="bottom" height={36} iconType="circle" />}
                   </PieChart>
@@ -227,14 +236,14 @@ export default function App() {
 
             {/* By Area - Bar */}
             <div className="space-y-4">
-              <h4 className="text-center text-sm font-semibold text-slate-500 uppercase tracking-wider">By Area</h4>
+              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">By Area</h4>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={result?.areaDistribution || [{ name: '', value: 0 }]}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} />
-                    <YAxis fontSize={11} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                    <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                    <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                     <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={32} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -243,7 +252,7 @@ export default function App() {
 
             {/* By PIC - Horizontal Bar */}
             <div className="space-y-4">
-              <h4 className="text-center text-sm font-semibold text-slate-500 uppercase tracking-wider">By PIC</h4>
+              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">By PIC</h4>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart 
@@ -253,31 +262,31 @@ export default function App() {
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" fontSize={11} axisLine={false} tickLine={false} width={80} />
-                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <YAxis dataKey="name" type="category" fontSize={10} axisLine={false} tickLine={false} width={80} tick={{ fill: '#94a3b8' }} />
+                    <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                     <Bar dataKey="value" fill="#14b8a6" radius={[0, 6, 6, 0]} barSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Summary and Insights Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
+          <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/50 p-8 shadow-xl shadow-slate-200/50 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
                 <FileText size={18} />
               </div>
               <h3 className="font-bold text-slate-800">Summary Audit 5R 1S</h3>
             </div>
-            <p className="text-slate-600 leading-relaxed">
+            <p className="text-slate-600 leading-relaxed text-sm">
               {result ? result.summaryText : "Upload data to see the executive summary of the audit findings."}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
+          <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/50 p-8 shadow-xl shadow-slate-200/50 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
                 <Lightbulb size={18} />
@@ -286,60 +295,62 @@ export default function App() {
             </div>
             <ul className="space-y-3">
               {result ? result.suggestions.map((s, i) => (
-                <li key={i} className="flex gap-3 text-slate-600">
+                <li key={i} className="flex gap-3 text-slate-600 text-sm">
                   <span className="text-indigo-600 font-bold">•</span>
                   {s}
                 </li>
               )) : (
-                <li className="text-slate-400 italic">No insights available. Please upload audit documents.</li>
+                <li className="text-slate-400 italic text-sm">No insights available. Please upload audit documents.</li>
               )}
             </ul>
           </div>
         </div>
 
-        {/* Table - Top 10 */}
+        {/* Table Section */}
         {result && (
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+          <div className="bg-white/70 backdrop-blur-lg rounded-3xl border border-white/50 overflow-hidden shadow-xl shadow-slate-200/50">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
               <div className="flex items-center gap-6">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                  <TableIcon size={18} className="text-slate-400" />
-                  Top 10 Findings
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <TableIcon size={20} className="text-slate-400" />
+                  Top Audit Findings
                 </h3>
                 <button 
                   onClick={handleExport}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all"
                 >
                   <Download size={14} />
-                  Export Full Excel
+                  Export to Excel
                 </button>
               </div>
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Showing 10 of {result.findings.length}</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Showing top 10 of {result.findings.length}
+              </span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                  <tr className="bg-slate-50/50 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                     {AUDIT_TABLE_HEADERS.map(h => (
-                      <th key={h} className="px-6 py-4 border-b border-slate-100">{h}</th>
+                      <th key={h} className="px-8 py-5 border-b border-slate-100">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="text-sm divide-y divide-slate-100">
                   {result.findings.slice(0, 10).map((f, i) => (
-                    <tr key={i} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-slate-400">{f.no}</td>
-                      <td className="px-6 py-4 font-medium text-slate-700">{f.problem}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded uppercase">
+                    <tr key={i} className="hover:bg-indigo-50/30 transition-colors group">
+                      <td className="px-8 py-5 font-mono text-xs text-slate-400">{f.no}</td>
+                      <td className="px-8 py-5 font-semibold text-slate-700">{f.problem}</td>
+                      <td className="px-8 py-5">
+                        <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg uppercase">
                           {f.category}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-600">{f.area}</td>
-                      <td className="px-6 py-4 text-slate-600 font-semibold">{f.pic}</td>
-                      <td className="px-6 py-4 text-slate-500 text-xs max-w-xs truncate">{f.rootCause}</td>
-                      <td className="px-6 py-4 text-slate-500 text-xs max-w-xs truncate">{f.action}</td>
-                      <td className="px-6 py-4 text-slate-400 font-mono text-xs">{f.dueDate}</td>
+                      <td className="px-8 py-5 text-slate-600">{f.area}</td>
+                      <td className="px-8 py-5 text-slate-600 font-bold">{f.pic}</td>
+                      <td className="px-8 py-5 text-slate-500 text-xs max-w-xs truncate">{f.rootCause}</td>
+                      <td className="px-8 py-5 text-slate-500 text-xs max-w-xs truncate">{f.action}</td>
+                      <td className="px-8 py-5 text-slate-400 font-mono text-xs">{f.dueDate}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -348,6 +359,7 @@ export default function App() {
           </div>
         )}
       </main>
+
 
       {/* Upload Modal */}
       <AnimatePresence>
@@ -358,19 +370,22 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowUploadModal(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
+              className="relative w-full max-w-xl bg-white/90 backdrop-blur-2xl rounded-[40px] shadow-2xl overflow-hidden border border-white/50"
             >
-              <div className="p-8 space-y-6">
+              <div className="p-10 space-y-8">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-slate-800">Upload Audit Documents</h3>
-                  <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <X size={20} />
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800">Upload Data Audit</h3>
+                    <p className="text-sm text-slate-500">Pilih file PDF atau PPTX untuk dianalisis</p>
+                  </div>
+                  <button onClick={() => setShowUploadModal(false)} className="p-3 hover:bg-slate-100 rounded-full transition-colors">
+                    <X size={24} />
                   </button>
                 </div>
 
@@ -382,29 +397,37 @@ export default function App() {
                     onChange={onFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <div className="border-2 border-dashed border-slate-200 rounded-2xl p-12 flex flex-col items-center justify-center gap-4 group-hover:border-indigo-400 group-hover:bg-indigo-50/30 transition-all">
-                    <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-                      <Upload size={32} />
+                  <div className="border-3 border-dashed border-slate-200 rounded-[32px] p-16 flex flex-col items-center justify-center gap-6 group-hover:border-emerald-400 group-hover:bg-emerald-50/30 transition-all">
+                    <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center shadow-inner">
+                      <Upload size={40} />
                     </div>
                     <div className="text-center">
-                      <p className="font-bold text-slate-700">Drop files here or click to upload</p>
-                      <p className="text-sm text-slate-400">PDF, PPTX, or PPT up to 20MB</p>
+                      <p className="text-lg font-bold text-slate-700">Tarik file ke sini</p>
+                      <p className="text-sm text-slate-400">atau klik untuk memilih file</p>
                     </div>
                   </div>
                 </div>
 
                 {files.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Selected Files ({files.length})</p>
-                    <div className="max-h-40 overflow-y-auto space-y-2 pr-2">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">File Terpilih ({files.length})</p>
+                      <button onClick={() => setFiles([])} className="text-xs font-bold text-red-500 hover:underline">Hapus Semua</button>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                       {files.map((file, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                          <div className="flex items-center gap-3">
-                            <FileText size={18} className="text-indigo-600" />
-                            <span className="text-sm font-medium text-slate-700 truncate max-w-[300px]">{file.name}</span>
+                        <div key={i} className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100 shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                              <FileText size={20} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-slate-700 truncate max-w-[250px]">{file.name}</span>
+                              <span className="text-[10px] text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            </div>
                           </div>
-                          <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-slate-400 hover:text-red-500 transition-colors">
-                            <X size={16} />
+                          <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                            <X size={18} />
                           </button>
                         </div>
                       ))}
@@ -415,10 +438,10 @@ export default function App() {
                 <button 
                   onClick={processFiles}
                   disabled={files.length === 0 || isProcessing}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-200"
+                  className="w-full py-5 bg-emerald-600 text-white rounded-[24px] font-bold text-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-4 shadow-xl shadow-emerald-200"
                 >
-                  {isProcessing ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
-                  {isProcessing ? "Processing..." : "Start Analysis"}
+                  {isProcessing ? <Loader2 size={24} className="animate-spin" /> : <CheckCircle2 size={24} />}
+                  {isProcessing ? "Sedang Memproses..." : "Mulai Analisis AI"}
                 </button>
               </div>
             </motion.div>
@@ -427,39 +450,47 @@ export default function App() {
       </AnimatePresence>
 
       {/* Floating Chatbot */}
-      <div className="fixed bottom-8 right-8 z-40 flex flex-col items-end gap-4">
+      <div className="fixed bottom-10 right-10 z-40 flex flex-col items-end gap-6">
         <AnimatePresence>
           {isChatOpen && (
             <motion.div 
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="w-[400px] h-[500px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+              exit={{ opacity: 0, y: 30, scale: 0.9 }}
+              className="w-[420px] h-[600px] bg-white/90 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 flex flex-col overflow-hidden"
             >
-              <div className="p-4 bg-indigo-600 text-white flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <MessageSquare size={20} />
-                  <span className="font-bold">Audit Assistant</span>
+              <div className="p-6 bg-emerald-600 text-white flex justify-between items-center shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <MessageSquare size={24} />
+                  </div>
+                  <div>
+                    <span className="font-bold block">Asisten Audit AI</span>
+                    <span className="text-[10px] text-emerald-100 uppercase tracking-widest font-bold">Online & Siap Membantu</span>
+                  </div>
                 </div>
-                <button onClick={() => setIsChatOpen(false)} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
-                  <X size={20} />
+                <button onClick={() => setIsChatOpen(false)} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
+                  <X size={24} />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
                 {chatHistory.length === 0 && (
-                  <div className="text-center py-12 space-y-2">
-                    <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
-                      <MessageSquare size={24} />
+                  <div className="text-center py-20 space-y-4">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-[32px] flex items-center justify-center mx-auto shadow-inner">
+                      <MessageSquare size={40} />
                     </div>
-                    <p className="text-sm text-slate-500">Ask me anything about the audit data!</p>
+                    <div className="space-y-1">
+                      <p className="font-bold text-slate-700">Halo! Ada yang bisa saya bantu?</p>
+                      <p className="text-sm text-slate-400">Tanyakan apa saja tentang data audit Anda.</p>
+                    </div>
                   </div>
                 )}
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
                     <div className={cn(
-                      "max-w-[80%] p-3 rounded-2xl text-sm shadow-sm",
-                      msg.role === 'user' ? "bg-indigo-600 text-white rounded-tr-none" : "bg-white text-slate-700 rounded-tl-none border border-slate-100"
+                      "max-w-[85%] p-4 rounded-[24px] text-sm shadow-sm leading-relaxed",
+                      msg.role === 'user' ? "bg-emerald-600 text-white rounded-tr-none" : "bg-white text-slate-700 rounded-tl-none border border-slate-100"
                     )}>
                       {msg.text}
                     </div>
@@ -467,30 +498,34 @@ export default function App() {
                 ))}
                 {isChatLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
-                      <Loader2 size={16} className="animate-spin text-indigo-600" />
+                    <div className="bg-white p-4 rounded-[24px] rounded-tl-none border border-slate-100 shadow-sm">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                      </div>
                     </div>
                   </div>
                 )}
                 <div ref={chatEndRef} />
               </div>
 
-              <div className="p-4 bg-white border-t border-slate-100 flex gap-2">
+              <div className="p-6 bg-white border-t border-slate-100 flex gap-3">
                 <input 
                   type="text" 
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleChatSend()}
-                  placeholder={result ? "Type a message..." : "Upload data first"}
+                  placeholder={result ? "Ketik pesan Anda..." : "Upload data terlebih dahulu"}
                   disabled={!result || isChatLoading}
-                  className="flex-1 bg-slate-100 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-50"
+                  className="flex-1 bg-slate-100 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500 transition-all disabled:opacity-50"
                 />
                 <button 
                   onClick={handleChatSend}
                   disabled={!result || isChatLoading || !chatInput.trim()}
-                  className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all"
+                  className="p-3 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-200"
                 >
-                  <Send size={20} />
+                  <Send size={24} />
                 </button>
               </div>
             </motion.div>
@@ -499,22 +534,25 @@ export default function App() {
 
         <button 
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-xl shadow-indigo-200 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+          className="w-16 h-16 bg-emerald-600 text-white rounded-[24px] shadow-2xl shadow-emerald-200 flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
         >
-          <MessageSquare size={28} />
+          <MessageSquare size={32} className="group-hover:rotate-12 transition-transform" />
         </button>
       </div>
 
       {/* Global Processing Loader */}
       {isProcessing && (
-        <div className="fixed inset-0 z-[60] bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-6">
+        <div className="fixed inset-0 z-[60] bg-white/60 backdrop-blur-2xl flex flex-col items-center justify-center gap-8">
           <div className="relative">
-            <div className="w-24 h-24 border-4 border-indigo-100 rounded-full" />
-            <div className="w-24 h-24 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin absolute inset-0" />
+            <div className="w-32 h-32 border-8 border-emerald-100 rounded-full shadow-inner" />
+            <div className="w-32 h-32 border-8 border-emerald-600 rounded-full border-t-transparent animate-spin absolute inset-0 shadow-lg" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <BarChart3 size={32} className="text-emerald-600 animate-pulse" />
+            </div>
           </div>
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-slate-800">Analyzing Documents</h2>
-            <p className="text-slate-500 font-medium">Gemini AI is processing your audit findings...</p>
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Menganalisis Dokumen</h2>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Gemini AI sedang bekerja untuk Anda</p>
           </div>
         </div>
       )}
