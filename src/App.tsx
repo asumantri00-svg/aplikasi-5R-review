@@ -141,7 +141,7 @@ export default function App() {
 
   const handleExport = () => {
     if (result) {
-      exportToExcel(result.findings);
+      exportToExcel(result);
     }
   };
 
@@ -201,13 +201,13 @@ export default function App() {
             <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
               <BarChart3 size={18} />
             </div>
-            <h3 className="font-bold text-slate-800">Data Distribution</h3>
+            <h3 className="font-bold text-slate-800">Distribusi Data</h3>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* By Category - Donut */}
             <div className="space-y-4">
-              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">By Category</h4>
+              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Berdasarkan Kategori</h4>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -236,7 +236,7 @@ export default function App() {
 
             {/* By Area - Bar */}
             <div className="space-y-4">
-              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">By Area</h4>
+              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Berdasarkan Area</h4>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={result?.areaDistribution || [{ name: '', value: 0 }]}>
@@ -252,7 +252,7 @@ export default function App() {
 
             {/* By PIC - Horizontal Bar */}
             <div className="space-y-4">
-              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">By PIC</h4>
+              <h4 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Berdasarkan PIC</h4>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart 
@@ -279,10 +279,10 @@ export default function App() {
               <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
                 <FileText size={18} />
               </div>
-              <h3 className="font-bold text-slate-800">Summary Audit 5R 1S</h3>
+              <h3 className="font-bold text-slate-800">Ringkasan Audit 5R 1S</h3>
             </div>
             <p className="text-slate-600 leading-relaxed text-sm">
-              {result ? result.summaryText : "Upload data to see the executive summary of the audit findings."}
+              {result ? result.summaryText : "Unggah data untuk melihat ringkasan eksekutif dari temuan audit."}
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export default function App() {
               <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
                 <Lightbulb size={18} />
               </div>
-              <h3 className="font-bold text-slate-800">Insights</h3>
+              <h3 className="font-bold text-slate-800">Wawasan</h3>
             </div>
             <ul className="space-y-3">
               {result ? result.suggestions.map((s, i) => (
@@ -300,7 +300,7 @@ export default function App() {
                   {s}
                 </li>
               )) : (
-                <li className="text-slate-400 italic text-sm">No insights available. Please upload audit documents.</li>
+                <li className="text-slate-400 italic text-sm">Tidak ada wawasan tersedia. Silakan unggah dokumen audit.</li>
               )}
             </ul>
           </div>
@@ -313,18 +313,18 @@ export default function App() {
               <div className="flex items-center gap-6">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   <TableIcon size={20} className="text-slate-400" />
-                  Top Audit Findings
+                  Temuan Audit Utama
                 </h3>
                 <button 
                   onClick={handleExport}
                   className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all"
                 >
                   <Download size={14} />
-                  Export to Excel
+                  Ekspor ke Excel
                 </button>
               </div>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                Showing top 10 of {result.findings.length}
+                Menampilkan 10 teratas dari {result.findings.length}
               </span>
             </div>
             <div className="overflow-x-auto">

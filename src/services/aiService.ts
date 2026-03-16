@@ -19,16 +19,23 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
   const model = "gemini-3-flash-preview";
   
   const prompt = `
-    Quickly extract audit findings from the attached documents.
-    Headers: No., Problem, Category, Area, PIC, Root Cause, Action, Due Date.
+    Extract ALL audit findings from the attached documents without exception. 
+    It is critical that no data is missed.
     
-    Provide:
-    1. List of findings.
-    2. A single paragraph of exactly 5 lines summarizing the overall state and trends.
-    3. 3-5 specific bullet point insights/suggestions for improvement.
-    4. Category count.
-    5. Area count.
-    6. PIC count.
+    Headers to extract: No., Problem, Category, Area, PIC, Root Cause, Action, Due Date.
+    
+    Provide the response in the following structure:
+    1. findings: A complete list of every single finding found in the documents.
+    2. summaryText: A single paragraph of exactly 5 lines summarizing the overall state and trends in Indonesian.
+    3. suggestions: 3-5 specific bullet point insights/suggestions for improvement in Indonesian.
+    4. categoryDistribution: Count of findings per category.
+    5. areaDistribution: Count of findings per area.
+    6. picDistribution: Count of findings per PIC.
+
+    IMPORTANT: 
+    - Do not summarize the findings list; extract each one individually.
+    - All descriptive text (summary and suggestions) MUST be in Indonesian.
+    - If there are many findings, ensure the list is exhaustive.
   `;
 
   const response = await ai.models.generateContent({
@@ -36,6 +43,7 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
     contents: [{ parts: [...parts, { text: prompt }] }],
     config: {
       thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      maxOutputTokens: 8192,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -114,7 +122,7 @@ export async function chatWithAuditData(history: ChatMessage[], findings: any[])
     model,
     config: {
       thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-      systemInstruction: `You are an Audit Assistant. Answer based on: ${JSON.stringify(findings)}. Be very brief.`,
+      systemInstruction: `Anda adalah Asisten Audit 5R. Jawablah pertanyaan pengguna berdasarkan data temuan berikut: ${JSON.stringify(findings)}. Selalu jawab dalam Bahasa Indonesia yang profesional, singkat, dan jelas.`,
     },
   });
 
