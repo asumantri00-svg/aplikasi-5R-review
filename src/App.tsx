@@ -60,7 +60,11 @@ export default function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const key = process.env.GEMINI_API_KEY1 || import.meta.env.VITE_GEMINI_API_KEY1;
+    const key = process.env.GEMINI_API_KEY1 || 
+                import.meta.env.VITE_GEMINI_API_KEY1 || 
+                process.env.GEMINI_API_KEY || 
+                import.meta.env.VITE_GEMINI_API_KEY;
+                
     if (!key || key === 'MY_GEMINI_API_KEY') {
       setApiKeyMissing(true);
     }
@@ -164,7 +168,7 @@ export default function App() {
         <div className="relative z-40 bg-amber-50/90 backdrop-blur-md border-b border-amber-200 px-8 py-3 flex items-center justify-between text-amber-800 text-sm font-medium">
           <div className="flex items-center gap-2">
             <X className="text-amber-500" size={16} />
-            <span>API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di pengaturan rahasia (Secrets).</span>
+            <span>API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY1 atau GEMINI_API_KEY di pengaturan rahasia (Secrets).</span>
           </div>
           <a 
             href="https://ai.google.dev/gemini-api/docs/api-key" 

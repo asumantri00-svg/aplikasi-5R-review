@@ -5,9 +5,13 @@ let aiInstance: GoogleGenAI | null = null;
 
 function getAI(): GoogleGenAI {
   if (!aiInstance) {
-    const apiKey = process.env.GEMINI_API_KEY1 || import.meta.env.VITE_GEMINI_API_KEY1;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY1 is not set. Please set it in your environment variables.");
+    const apiKey = process.env.GEMINI_API_KEY1 || 
+                   import.meta.env.VITE_GEMINI_API_KEY1 || 
+                   process.env.GEMINI_API_KEY || 
+                   import.meta.env.VITE_GEMINI_API_KEY;
+    
+    if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
+      throw new Error("API Key Gemini tidak ditemukan. Silakan konfigurasi GEMINI_API_KEY1 atau GEMINI_API_KEY di Secrets.");
     }
     aiInstance = new GoogleGenAI({ apiKey });
   }
@@ -16,7 +20,9 @@ function getAI(): GoogleGenAI {
 
 export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISummary> {
   const ai = getAI();
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-3.1-pro-preview";
+  
+  console.log("Starting audit analysis with model:", model);
   
   const prompt = `
     Extract ALL audit findings from the attached documents without exception. 
@@ -38,96 +44,102 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
     - If there are many findings, ensure the list is exhaustive.
   `;
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: [{ parts: [...parts, { text: prompt }] }],
-    config: {
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-      maxOutputTokens: 8192,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          findings: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                no: { type: Type.STRING },
-                problem: { type: Type.STRING },
-                category: { type: Type.STRING },
-                area: { type: Type.STRING },
-                pic: { type: Type.STRING },
-                rootCause: { type: Type.STRING },
-                action: { type: Type.STRING },
-                dueDate: { type: Type.STRING },
-              },
-              required: ["no", "problem", "category", "area", "pic", "rootCause", "action", "dueDate"]
-            }
-          },
-          summaryText: { 
-            type: Type.STRING,
-            description: "A single paragraph of exactly 5 lines summarizing the data."
-          },
-          suggestions: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-            description: "3-5 specific suggestions for improvement."
-          },
-          categoryDistribution: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                value: { type: Type.NUMBER }
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: [{ parts: [...parts, { text: prompt }] }],
+      config: {
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            findings: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  no: { type: Type.STRING },
+                  problem: { type: Type.STRING },
+                  category: { type: Type.STRING },
+                  area: { type: Type.STRING },
+                  pic: { type: Type.STRING },
+                  rootCause: { type: Type.STRING },
+                  action: { type: Type.STRING },
+                  dueDate: { type: Type.STRING },
+                }
+              }
+            },
+            summaryText: { type: Type.STRING },
+            suggestions: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            categoryDistribution: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
+                }
+              }
+            },
+            areaDistribution: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
+                }
+              }
+            },
+            picDistribution: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
+                }
               }
             }
           },
-          areaDistribution: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                value: { type: Type.NUMBER }
-              }
-            }
-          },
-          picDistribution: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                value: { type: Type.NUMBER }
-              }
-            }
-          }
-        },
-        required: ["findings", "summaryText", "suggestions", "categoryDistribution", "areaDistribution", "picDistribution"]
+          required: ["findings", "summaryText", "suggestions", "categoryDistribution", "areaDistribution", "picDistribution"]
+        }
       }
-    }
-  });
+    });
 
-  const data = JSON.parse(response.text || "{}");
-  return data as AISummary;
+    console.log("Analysis successful");
+    const data = JSON.parse(response.text || "{}");
+    return data as AISummary;
+  } catch (error) {
+    console.error("Error in analyzeAuditFiles:", error);
+    throw error;
+  }
 }
 
 export async function chatWithAuditData(history: ChatMessage[], findings: any[]): Promise<string> {
   const ai = getAI();
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-3.1-pro-preview";
   
-  const chat = ai.chats.create({
-    model,
-    config: {
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-      systemInstruction: `Anda adalah Asisten Audit 5R. Jawablah pertanyaan pengguna berdasarkan data temuan berikut: ${JSON.stringify(findings)}. Selalu jawab dalam Bahasa Indonesia yang profesional, singkat, dan jelas.`,
-    },
-  });
+  console.log("Starting chat with model:", model);
+  
+  try {
+    const chat = ai.chats.create({
+      model,
+      config: {
+        systemInstruction: `Anda adalah Asisten Audit 5R. Jawablah pertanyaan pengguna berdasarkan data temuan berikut: ${JSON.stringify(findings)}. Selalu jawab dalam Bahasa Indonesia yang profesional, singkat, dan jelas.`,
+      },
+    });
 
-  const lastMessage = history[history.length - 1].text;
-  const response = await chat.sendMessage({ message: lastMessage });
-  
-  return response.text || "I'm sorry, I couldn't process that.";
+    const lastMessage = history[history.length - 1].text;
+    const response = await chat.sendMessage({ message: lastMessage });
+    
+    return response.text || "I'm sorry, I couldn't process that.";
+  } catch (error) {
+    console.error("Error in chatWithAuditData:", error);
+    throw error;
+  }
 }
