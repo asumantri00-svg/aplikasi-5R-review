@@ -35,6 +35,7 @@ import { AISummary, AuditFinding, AUDIT_TABLE_HEADERS, ChatMessage, AuditFilePar
 import { analyzeAuditFiles, chatWithAuditData } from './services/aiService';
 import { exportToExcel } from './utils/excelExport';
 import { extractTextFromPptx } from './utils/pptxParser';
+import { extractTextFromPdf } from './utils/pdfParser';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -60,12 +61,9 @@ export default function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const key = process.env.GEMINI_API_KEY1 || 
-                import.meta.env.VITE_GEMINI_API_KEY1 || 
-                process.env.GEMINI_API_KEY || 
-                import.meta.env.VITE_GEMINI_API_KEY;
+    const key = process.env.OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
                 
-    if (!key || key === 'MY_GEMINI_API_KEY') {
+    if (!key || key === 'MY_OPENAI_API_KEY') {
       setApiKeyMissing(true);
     }
   }, []);
@@ -88,14 +86,24 @@ export default function App() {
     setError(null);
     setShowUploadModal(false);
     
+    console.log("Processing files:", files.map(f => f.name));
+    
     try {
       const parts = await Promise.all(files.map(async (file): Promise<AuditFilePart> => {
         const isPptx = file.name.endsWith('.pptx') || file.name.endsWith('.ppt');
+        const isPdf = file.name.endsWith('.pdf');
+        
+        console.log(`Extracting content from: ${file.name} (type: ${file.type})`);
         
         if (isPptx) {
           const text = await extractTextFromPptx(file);
+          console.log(`Extracted ${text.length} characters from PPTX`);
           return { text: `File: ${file.name}\nContent:\n${text}` };
-        } else {
+        } else if (isPdf) {
+          const text = await extractTextFromPdf(file);
+          console.log(`Extracted ${text.length} characters from PDF`);
+          return { text: `File: ${file.name}\nContent:\n${text}` };
+        } else if (file.type.startsWith('image/')) {
           return new Promise<AuditFilePart>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => {
@@ -103,21 +111,43 @@ export default function App() {
               resolve({ 
                 inlineData: { 
                   data: base64, 
-                  mimeType: file.type || 'application/pdf' 
+                  mimeType: file.type 
                 } 
               });
             };
             reader.onerror = reject;
             reader.readAsDataURL(file);
           });
+        } else {
+          console.warn(`Unsupported file type: ${file.name}`);
+          return { text: `File: ${file.name} (Unsupported type)` };
         }
       }));
 
+      console.log("Sending data to AI for analysis...");
       const summary = await analyzeAuditFiles(parts);
+      console.log("AI analysis complete:", summary);
+      
+      if (!summary.findings || summary.findings.length === 0) {
+        console.warn("AI returned no findings.");
+        setError("AI tidak menemukan data temuan audit dalam dokumen tersebut. Pastikan dokumen berisi tabel atau daftar temuan yang jelas.");
+      }
+      
       setResult(summary);
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to process documents. Please ensure they are valid PDF or PPTX files.");
+      console.error("Error processing files:", err);
+      
+      let userFriendlyError = "Gagal memproses dokumen. Pastikan file PDF, PPTX, atau Gambar valid.";
+      
+      if (err.message?.includes("429") || err.message?.includes("quota")) {
+        userFriendlyError = "Kuota OpenAI Anda telah habis atau Anda telah mencapai batas penggunaan. Silakan periksa detail penagihan di platform.openai.com.";
+      } else if (err.message?.includes("API key")) {
+        userFriendlyError = "API Key OpenAI tidak valid atau belum dikonfigurasi dengan benar.";
+      } else {
+        userFriendlyError = err.message || userFriendlyError;
+      }
+      
+      setError(userFriendlyError);
     } finally {
       setIsProcessing(false);
     }
@@ -163,15 +193,25 @@ export default function App() {
         <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px]" />
       </div>
 
+      {/* Error Message Banner */}
+      {error && (
+        <div className="relative z-40 bg-red-50/90 backdrop-blur-md border-b border-red-200 px-8 py-3 flex items-center justify-between text-red-800 text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <X className="text-red-500 cursor-pointer" size={16} onClick={() => setError(null)} />
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+
       {/* API Key Warning Banner */}
       {apiKeyMissing && (
         <div className="relative z-40 bg-amber-50/90 backdrop-blur-md border-b border-amber-200 px-8 py-3 flex items-center justify-between text-amber-800 text-sm font-medium">
           <div className="flex items-center gap-2">
             <X className="text-amber-500" size={16} />
-            <span>API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY1 atau GEMINI_API_KEY di pengaturan rahasia (Secrets).</span>
+            <span>API Key OpenAI belum dikonfigurasi. Silakan tambahkan OPENAI_API_KEY di pengaturan rahasia (Secrets).</span>
           </div>
           <a 
-            href="https://ai.google.dev/gemini-api/docs/api-key" 
+            href="https://platform.openai.com/api-keys" 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-amber-700 underline hover:text-amber-900"
@@ -386,7 +426,7 @@ export default function App() {
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-2xl font-bold text-slate-800">Upload Data Audit</h3>
-                    <p className="text-sm text-slate-500">Pilih file PDF atau PPTX untuk dianalisis</p>
+                    <p className="text-sm text-slate-500">Pilih file PDF, PPTX, atau Gambar untuk dianalisis</p>
                   </div>
                   <button onClick={() => setShowUploadModal(false)} className="p-3 hover:bg-slate-100 rounded-full transition-colors">
                     <X size={24} />
@@ -397,7 +437,7 @@ export default function App() {
                   <input 
                     type="file" 
                     multiple 
-                    accept=".pdf,.pptx,.ppt"
+                    accept=".pdf,.pptx,.ppt,image/*"
                     onChange={onFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
@@ -556,7 +596,7 @@ export default function App() {
           </div>
           <div className="text-center space-y-3">
             <h2 className="text-3xl font-black text-slate-800 tracking-tight">Menganalisis Dokumen</h2>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Gemini AI sedang bekerja untuk Anda</p>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">OpenAI sedang bekerja untuk Anda</p>
           </div>
         </div>
       )}
