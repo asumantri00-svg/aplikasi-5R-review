@@ -60,7 +60,7 @@ export default function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const key = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+    const key = process.env.GEMINI_API_KEY1 || import.meta.env.VITE_GEMINI_API_KEY1;
     if (!key || key === 'MY_GEMINI_API_KEY') {
       setApiKeyMissing(true);
     }
