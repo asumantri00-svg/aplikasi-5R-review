@@ -61,9 +61,12 @@ export default function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const key = process.env.OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
+    const key = process.env.GEMINI_API_KEY1 || 
+                import.meta.env.VITE_GEMINI_API_KEY1 || 
+                process.env.GEMINI_API_KEY || 
+                import.meta.env.VITE_GEMINI_API_KEY;
                 
-    if (!key || key === 'MY_OPENAI_API_KEY') {
+    if (!key || key === 'MY_GEMINI_API_KEY') {
       setApiKeyMissing(true);
     }
   }, []);
@@ -140,9 +143,9 @@ export default function App() {
       let userFriendlyError = "Gagal memproses dokumen. Pastikan file PDF, PPTX, atau Gambar valid.";
       
       if (err.message?.includes("429") || err.message?.includes("quota")) {
-        userFriendlyError = "Kuota OpenAI Anda telah habis atau Anda telah mencapai batas penggunaan. Silakan periksa detail penagihan di platform.openai.com.";
+        userFriendlyError = "Kuota API Anda telah habis atau Anda telah mencapai batas penggunaan. Silakan periksa detail penagihan di konsol AI Anda.";
       } else if (err.message?.includes("API key")) {
-        userFriendlyError = "API Key OpenAI tidak valid atau belum dikonfigurasi dengan benar.";
+        userFriendlyError = "API Key Gemini tidak valid atau belum dikonfigurasi dengan benar.";
       } else {
         userFriendlyError = err.message || userFriendlyError;
       }
@@ -208,16 +211,8 @@ export default function App() {
         <div className="relative z-40 bg-amber-50/90 backdrop-blur-md border-b border-amber-200 px-8 py-3 flex items-center justify-between text-amber-800 text-sm font-medium">
           <div className="flex items-center gap-2">
             <X className="text-amber-500" size={16} />
-            <span>API Key OpenAI belum dikonfigurasi. Silakan tambahkan OPENAI_API_KEY di pengaturan rahasia (Secrets).</span>
+            <span>API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di pengaturan rahasia (Secrets).</span>
           </div>
-          <a 
-            href="https://platform.openai.com/api-keys" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-amber-700 underline hover:text-amber-900"
-          >
-            Dapatkan API Key
-          </a>
         </div>
       )}
 
@@ -337,16 +332,13 @@ export default function App() {
               </div>
               <h3 className="font-bold text-slate-800">Wawasan</h3>
             </div>
-            <ul className="space-y-3">
-              {result ? result.suggestions.map((s, i) => (
-                <li key={i} className="flex gap-3 text-slate-600 text-sm">
-                  <span className="text-indigo-600 font-bold">•</span>
-                  {s}
-                </li>
-              )) : (
-                <li className="text-slate-400 italic text-sm">Tidak ada wawasan tersedia. Silakan unggah dokumen audit.</li>
+            <div className="text-slate-600 leading-relaxed text-sm">
+              {result ? (
+                <p>{result.suggestions[0] || "Tidak ada wawasan tersedia."}</p>
+              ) : (
+                <p className="text-slate-400 italic">Tidak ada wawasan tersedia. Silakan unggah dokumen audit.</p>
               )}
-            </ul>
+            </div>
           </div>
         </div>
 
@@ -485,7 +477,7 @@ export default function App() {
                   className="w-full py-5 bg-emerald-600 text-white rounded-[24px] font-bold text-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-4 shadow-xl shadow-emerald-200"
                 >
                   {isProcessing ? <Loader2 size={24} className="animate-spin" /> : <CheckCircle2 size={24} />}
-                  {isProcessing ? "Sedang Memproses..." : "Mulai Analisis AI"}
+                  {isProcessing ? "Sedang Memproses (Gemini)..." : "Mulai Analisis AI"}
                 </button>
               </div>
             </motion.div>
@@ -509,7 +501,7 @@ export default function App() {
                     <MessageSquare size={24} />
                   </div>
                   <div>
-                    <span className="font-bold block">Asisten Audit AI</span>
+                    <span className="font-bold block">Asisten Audit Gemini</span>
                     <span className="text-[10px] text-emerald-100 uppercase tracking-widest font-bold">Online & Siap Membantu</span>
                   </div>
                 </div>
@@ -525,7 +517,7 @@ export default function App() {
                       <MessageSquare size={40} />
                     </div>
                     <div className="space-y-1">
-                      <p className="font-bold text-slate-700">Halo! Ada yang bisa saya bantu?</p>
+                      <p className="font-bold text-slate-700">Halo! Saya Asisten Audit Gemini. Ada yang bisa saya bantu?</p>
                       <p className="text-sm text-slate-400">Tanyakan apa saja tentang data audit Anda.</p>
                     </div>
                   </div>

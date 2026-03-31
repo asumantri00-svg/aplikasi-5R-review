@@ -1,197 +1,144 @@
-import OpenAI from "openai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { AISummary, ChatMessage, AuditFilePart } from "../types";
 
-let openaiInstance: OpenAI | null = null;
+let genAIInstance: GoogleGenAI | null = null;
 
-function getOpenAI(): OpenAI {
-  if (!openaiInstance) {
-    const apiKey = process.env.OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
-    if (!apiKey || apiKey === 'MY_OPENAI_API_KEY') {
-      throw new Error("API Key OpenAI tidak ditemukan. Silakan konfigurasi OPENAI_API_KEY di Secrets.");
+function getAI(): GoogleGenAI {
+  if (!genAIInstance) {
+    const apiKey = process.env.GEMINI_API_KEY1 || 
+                   import.meta.env.VITE_GEMINI_API_KEY1 || 
+                   process.env.GEMINI_API_KEY || 
+                   import.meta.env.VITE_GEMINI_API_KEY;
+    
+    if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
+      throw new Error("API Key Gemini tidak ditemukan. Silakan konfigurasi GEMINI_API_KEY di Secrets.");
     }
-    openaiInstance = new OpenAI({ 
-      apiKey,
-      dangerouslyAllowBrowser: true 
-    });
+    genAIInstance = new GoogleGenAI({ apiKey });
   }
-  return openaiInstance;
+  return genAIInstance;
 }
 
 export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISummary> {
-  const openai = getOpenAI();
-  const model = "gpt-4o-2024-08-06";
+  const ai = getAI();
+  const model = "gemini-3.1-pro-preview";
   
-  console.log("Starting audit analysis with OpenAI model:", model);
+  console.log("Starting audit analysis with Gemini model:", model);
   
   const prompt = `
-    Anda adalah ahli analisis audit 5R (Ringkas, Rapi, Resik, Rawat, Rajin).
-    Tugas Anda adalah mengekstrak SEMUA temuan audit dari dokumen yang dilampirkan tanpa terkecuali. 
-    Sangat penting bahwa tidak ada data yang terlewatkan.
+    Ekstrak data audit 5R dari dokumen ini secara cepat dan akurat.
     
-    Header yang harus diekstrak: No., Problem, Category, Area, PIC, Root Cause, Action, Due Date.
-    
-    Berikan respons dalam struktur berikut (Bahasa Indonesia):
-    1. findings: Daftar lengkap setiap temuan yang ditemukan dalam dokumen.
-    2. summaryText: Satu paragraf tepat 5 baris yang merangkum keadaan keseluruhan dan tren dalam Bahasa Indonesia.
-    3. suggestions: 3-5 wawasan/saran perbaikan spesifik dalam Bahasa Indonesia.
-    4. categoryDistribution: Jumlah temuan per kategori.
-    5. areaDistribution: Jumlah temuan per area.
-    6. picDistribution: Jumlah temuan per PIC.
+    Output (Bahasa Indonesia):
+    1. findings: Daftar lengkap temuan (No, Problem, Category, Area, PIC, Root Cause, Action, Due Date).
+    2. summaryText: Ringkasan singkat keadaan audit (1 paragraf).
+    3. suggestions: Berikan wawasan dan saran perbaikan dalam SATU paragraf padat (masukkan sebagai elemen pertama dalam array).
+    4. categoryDistribution, areaDistribution, picDistribution: Statistik jumlah temuan.
 
-    PENTING: 
-    - Jangan meringkas daftar temuan; ekstrak setiap temuan satu per satu.
-    - Semua teks deskriptif (ringkasan dan saran) HARUS dalam Bahasa Indonesia.
-    - Jika ada banyak temuan, pastikan daftar tersebut lengkap.
-    - Jika data tidak ditemukan, berikan array kosong untuk findings, bukan error.
+    PENTING: Ekstrak SEMUA temuan tanpa kecuali. Jangan ada data terlewat.
   `;
 
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    {
-      role: "system",
-      content: "You are an expert audit analyzer. You extract data from documents and provide structured summaries in Indonesian."
-    },
-    {
-      role: "user",
-      content: [
-        { type: "text", text: prompt },
-        ...parts.map(part => {
-          if ('text' in part) {
-            return { type: "text" as const, text: part.text };
-          } else {
-            // OpenAI doesn't support PDF directly in Chat Completions.
-            // We should have extracted text or converted to images.
-            // For now, we'll just skip or send a placeholder if it's not an image.
-            if (part.inlineData.mimeType.startsWith('image/')) {
-              return {
-                type: "image_url" as const,
-                image_url: {
-                  url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
-                }
-              };
-            }
-            return { type: "text" as const, text: `[File content skipped: ${part.inlineData.mimeType} is not supported directly by OpenAI Chat API. Please extract text first.]` };
-          }
-        })
-      ]
-    }
-  ];
-
   try {
-    const response = await openai.chat.completions.create({
+    const response = await ai.models.generateContent({
       model,
-      messages,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "audit_summary",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              findings: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    no: { type: "string" },
-                    problem: { type: "string" },
-                    category: { type: "string" },
-                    area: { type: "string" },
-                    pic: { type: "string" },
-                    rootCause: { type: "string" },
-                    action: { type: "string" },
-                    dueDate: { type: "string" },
-                  },
-                  required: ["no", "problem", "category", "area", "pic", "rootCause", "action", "dueDate"],
-                  additionalProperties: false
-                }
-              },
-              summaryText: { type: "string" },
-              suggestions: {
-                type: "array",
-                items: { type: "string" }
-              },
-              categoryDistribution: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    value: { type: "number" }
-                  },
-                  required: ["name", "value"],
-                  additionalProperties: false
-                }
-              },
-              areaDistribution: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    value: { type: "number" }
-                  },
-                  required: ["name", "value"],
-                  additionalProperties: false
-                }
-              },
-              picDistribution: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    value: { type: "number" }
-                  },
-                  required: ["name", "value"],
-                  additionalProperties: false
-                }
+      contents: [{ parts: [...parts.map(p => {
+        if ('text' in p) return { text: p.text };
+        return { inlineData: p.inlineData };
+      }), { text: prompt }] }],
+      config: {
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            findings: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  no: { type: Type.STRING },
+                  problem: { type: Type.STRING },
+                  category: { type: Type.STRING },
+                  area: { type: Type.STRING },
+                  pic: { type: Type.STRING },
+                  rootCause: { type: Type.STRING },
+                  action: { type: Type.STRING },
+                  dueDate: { type: Type.STRING },
+                },
+                required: ["no", "problem", "category", "area", "pic", "rootCause", "action", "dueDate"]
               }
             },
-            required: ["findings", "summaryText", "suggestions", "categoryDistribution", "areaDistribution", "picDistribution"],
-            additionalProperties: false
-          }
+            summaryText: { type: Type.STRING },
+            suggestions: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            categoryDistribution: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
+                },
+                required: ["name", "value"]
+              }
+            },
+            areaDistribution: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
+                },
+                required: ["name", "value"]
+              }
+            },
+            picDistribution: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
+                },
+                required: ["name", "value"]
+              }
+            }
+          },
+          required: ["findings", "summaryText", "suggestions", "categoryDistribution", "areaDistribution", "picDistribution"]
         }
       }
     });
 
-    console.log("OpenAI Analysis successful");
-    const content = response.choices[0].message.content;
-    if (!content) throw new Error("Failed to get content from OpenAI response");
-    const data = JSON.parse(content);
+    console.log("Gemini Analysis successful");
+    const data = JSON.parse(response.text || "{}");
     return data as AISummary;
   } catch (error) {
-    console.error("Error in analyzeAuditFiles (OpenAI):", error);
+    console.error("Error in analyzeAuditFiles (Gemini):", error);
     throw error;
   }
 }
 
 export async function chatWithAuditData(history: ChatMessage[], findings: any[]): Promise<string> {
-  const openai = getOpenAI();
-  const model = "gpt-4o";
+  const ai = getAI();
+  const model = "gemini-3.1-pro-preview";
   
-  console.log("Starting chat with OpenAI model:", model);
+  console.log("Starting chat with Gemini model:", model);
   
   try {
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      {
-        role: "system",
-        content: `Anda adalah Asisten Audit 5R. Jawablah pertanyaan pengguna berdasarkan data temuan berikut: ${JSON.stringify(findings)}. Selalu jawab dalam Bahasa Indonesia yang profesional, singkat, dan jelas.`
-      },
-      ...history.map(msg => ({
-        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
-        content: msg.text
-      }))
-    ];
-
-    const response = await openai.chat.completions.create({
+    const chat = ai.chats.create({
       model,
-      messages,
+      config: {
+        systemInstruction: `Anda adalah Asisten Audit 5R. Jawablah pertanyaan pengguna berdasarkan data temuan berikut: ${JSON.stringify(findings)}. Selalu jawab dalam Bahasa Indonesia yang profesional, singkat, dan jelas.`,
+      },
     });
+
+    const lastMessage = history[history.length - 1].text;
+    const response = await chat.sendMessage({ message: lastMessage });
     
-    return response.choices[0].message.content || "I'm sorry, I couldn't process that.";
+    return response.text || "Mohon maaf, saya tidak dapat memproses permintaan tersebut.";
   } catch (error) {
-    console.error("Error in chatWithAuditData (OpenAI):", error);
+    console.error("Error in chatWithAuditData (Gemini):", error);
     throw error;
   }
 }
