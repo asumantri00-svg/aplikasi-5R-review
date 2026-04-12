@@ -1,144 +1,82 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import { AISummary, ChatMessage, AuditFilePart } from "../types";
 
-let genAIInstance: GoogleGenAI | null = null;
-
-function getAI(): GoogleGenAI {
-  if (!genAIInstance) {
-    const apiKey = process.env.GEMINI_API_KEY1 || 
-                   import.meta.env.VITE_GEMINI_API_KEY1 || 
-                   process.env.GEMINI_API_KEY || 
-                   import.meta.env.VITE_GEMINI_API_KEY;
-    
-    if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
-      throw new Error("API Key Gemini tidak ditemukan. Silakan konfigurasi GEMINI_API_KEY di Secrets.");
-    }
-    genAIInstance = new GoogleGenAI({ apiKey });
-  }
-  return genAIInstance;
-}
-
 export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISummary> {
-  const ai = getAI();
-  const model = "gemini-3.1-pro-preview";
+  console.log("Starting local audit analysis (No AI)");
   
-  console.log("Starting audit analysis with Gemini model:", model);
+  let allText = "";
+  parts.forEach(part => {
+    if ('text' in part) {
+      allText += part.text + "\n";
+    }
+  });
+
+  const lines = allText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const findings: any[] = [];
   
-  const prompt = `
-    Ekstrak data audit 5R dari dokumen ini secara cepat dan akurat.
-    
-    Output (Bahasa Indonesia):
-    1. findings: Daftar lengkap temuan (No, Problem, Category, Area, PIC, Root Cause, Action, Due Date).
-    2. summaryText: Ringkasan singkat keadaan audit (1 paragraf).
-    3. suggestions: Berikan wawasan dan saran perbaikan dalam SATU paragraf padat (masukkan sebagai elemen pertama dalam array).
-    4. categoryDistribution, areaDistribution, picDistribution: Statistik jumlah temuan.
+  // Simple heuristic to find audit findings
+  // Look for lines that contain keywords or look like table rows
+  lines.forEach((line, index) => {
+    const lowerLine = line.toLowerCase();
+    if (
+      lowerLine.includes('problem') || 
+      lowerLine.includes('temuan') || 
+      lowerLine.includes('masalah') ||
+      /^\d+[\s.]/.test(line) // Starts with a number
+    ) {
+      // Try to extract some info
+      findings.push({
+        no: (findings.length + 1).toString(),
+        problem: line.substring(0, 100),
+        category: lowerLine.includes('5r') ? '5R' : 'Umum',
+        area: 'Area Terdeteksi',
+        pic: 'PIC Terdeteksi',
+        rootCause: 'Analisis manual diperlukan',
+        action: 'Tindak lanjut manual',
+        dueDate: new Date().toLocaleDateString()
+      });
+    }
+  });
 
-    PENTING: Ekstrak SEMUA temuan tanpa kecuali. Jangan ada data terlewat.
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model,
-      contents: [{ parts: [...parts.map(p => {
-        if ('text' in p) return { text: p.text };
-        return { inlineData: p.inlineData };
-      }), { text: prompt }] }],
-      config: {
-        maxOutputTokens: 8192,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            findings: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  no: { type: Type.STRING },
-                  problem: { type: Type.STRING },
-                  category: { type: Type.STRING },
-                  area: { type: Type.STRING },
-                  pic: { type: Type.STRING },
-                  rootCause: { type: Type.STRING },
-                  action: { type: Type.STRING },
-                  dueDate: { type: Type.STRING },
-                },
-                required: ["no", "problem", "category", "area", "pic", "rootCause", "action", "dueDate"]
-              }
-            },
-            summaryText: { type: Type.STRING },
-            suggestions: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            categoryDistribution: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING },
-                  value: { type: Type.NUMBER }
-                },
-                required: ["name", "value"]
-              }
-            },
-            areaDistribution: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING },
-                  value: { type: Type.NUMBER }
-                },
-                required: ["name", "value"]
-              }
-            },
-            picDistribution: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING },
-                  value: { type: Type.NUMBER }
-                },
-                required: ["name", "value"]
-              }
-            }
-          },
-          required: ["findings", "summaryText", "suggestions", "categoryDistribution", "areaDistribution", "picDistribution"]
-        }
-      }
+  // If no findings found, create a placeholder
+  if (findings.length === 0 && allText.length > 0) {
+    findings.push({
+      no: "1",
+      problem: "Dokumen berhasil dibaca namun format temuan tidak terdeteksi otomatis.",
+      category: "Info",
+      area: "N/A",
+      pic: "N/A",
+      rootCause: "Format tidak standar",
+      action: "Tinjau dokumen secara manual",
+      dueDate: "-"
     });
-
-    console.log("Gemini Analysis successful");
-    const data = JSON.parse(response.text || "{}");
-    return data as AISummary;
-  } catch (error) {
-    console.error("Error in analyzeAuditFiles (Gemini):", error);
-    throw error;
   }
+
+  const categoryMap: Record<string, number> = {};
+  const areaMap: Record<string, number> = {};
+  const picMap: Record<string, number> = {};
+
+  findings.forEach(f => {
+    categoryMap[f.category] = (categoryMap[f.category] || 0) + 1;
+    areaMap[f.area] = (areaMap[f.area] || 0) + 1;
+    picMap[f.pic] = (picMap[f.pic] || 0) + 1;
+  });
+
+  const summaryText = `Analisis lokal selesai. Berhasil mendeteksi ${findings.length} baris yang berpotensi sebagai temuan audit dari total ${lines.length} baris teks. Dokumen berisi informasi tentang audit 5R dan memerlukan tinjauan manual untuk detail lebih lanjut.`;
+
+  return {
+    findings,
+    summaryText,
+    suggestions: [
+      "Tinjau kembali daftar temuan di atas untuk akurasi.",
+      "Gunakan fitur ekspor untuk mengolah data lebih lanjut di Excel.",
+      "Pastikan format dokumen menggunakan tabel standar untuk hasil pembacaan yang lebih baik."
+    ],
+    categoryDistribution: Object.entries(categoryMap).map(([name, value]) => ({ name, value })),
+    areaDistribution: Object.entries(areaMap).map(([name, value]) => ({ name, value })),
+    picDistribution: Object.entries(picMap).map(([name, value]) => ({ name, value }))
+  };
 }
 
 export async function chatWithAuditData(history: ChatMessage[], findings: any[]): Promise<string> {
-  const ai = getAI();
-  const model = "gemini-3.1-pro-preview";
-  
-  console.log("Starting chat with Gemini model:", model);
-  
-  try {
-    const chat = ai.chats.create({
-      model,
-      config: {
-        systemInstruction: `Anda adalah Asisten Audit 5R. Jawablah pertanyaan pengguna berdasarkan data temuan berikut: ${JSON.stringify(findings)}. Selalu jawab dalam Bahasa Indonesia yang profesional, singkat, dan jelas.`,
-      },
-    });
-
-    const lastMessage = history[history.length - 1].text;
-    const response = await chat.sendMessage({ message: lastMessage });
-    
-    return response.text || "Mohon maaf, saya tidak dapat memproses permintaan tersebut.";
-  } catch (error) {
-    console.error("Error in chatWithAuditData (Gemini):", error);
-    throw error;
-  }
+  return "Fitur chat dinonaktifkan karena penggunaan AI telah dihapus. Silakan tinjau data di dashboard.";
 }

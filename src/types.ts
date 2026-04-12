@@ -7,6 +7,7 @@ export interface AuditFinding {
   rootCause: string;
   action: string;
   dueDate: string;
+  status?: string;
 }
 
 export interface AISummary {
@@ -36,4 +37,5 @@ export const AUDIT_TABLE_HEADERS = [
   "Root Cause",
   "Action",
   "Due Date",
+  "Status",
 ];
