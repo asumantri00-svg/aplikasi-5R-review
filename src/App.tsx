@@ -377,25 +377,30 @@ export default function App() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50/50 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                        {AUDIT_TABLE_HEADERS.map(h => (
-                          <th key={h} className="px-8 py-5 border-b border-slate-100">{h}</th>
-                        ))}
+                        <th className="px-8 py-5 border-b border-slate-100">NO.</th>
+                        <th className="px-8 py-5 border-b border-slate-100">PROBLEM</th>
+                        <th className="px-8 py-5 border-b border-slate-100">CATEGORY</th>
+                        <th className="px-8 py-5 border-b border-slate-100">AREA</th>
+                        <th className="px-8 py-5 border-b border-slate-100">PIC</th>
+                        <th className="px-8 py-5 border-b border-slate-100">ROOT CAUSE</th>
+                        <th className="px-8 py-5 border-b border-slate-100">ACTION</th>
+                        <th className="px-8 py-5 border-b border-slate-100">DUE DATE</th>
                       </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-slate-100">
                       {result.findings.slice(0, 10).map((f, i) => (
                         <tr key={i} className="hover:bg-indigo-50/30 transition-colors group">
                           <td className="px-8 py-5 font-mono text-xs text-slate-400">{f.no}</td>
-                          <td className="px-8 py-5 font-semibold text-slate-700">{f.problem}</td>
+                          <td className="px-8 py-5 font-semibold text-slate-700 max-w-xs">{f.problem}</td>
                           <td className="px-8 py-5">
                             <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg uppercase">
                               {f.category}
                             </span>
                           </td>
                           <td className="px-8 py-5 text-slate-600">{f.area}</td>
-                          <td className="px-8 py-5 text-slate-600 font-bold">{f.pic}</td>
-                          <td className="px-8 py-5 text-slate-500 text-xs max-w-xs truncate">{f.rootCause}</td>
-                          <td className="px-8 py-5 text-slate-500 text-xs max-w-xs truncate">{f.action}</td>
+                          <td className="px-8 py-5 text-slate-600 font-bold">{f.pic || '-'}</td>
+                          <td className="px-8 py-5 text-slate-500 text-xs max-w-xs">{f.rootCause}</td>
+                          <td className="px-8 py-5 text-slate-500 text-xs max-w-xs">{f.action}</td>
                           <td className="px-8 py-5 text-slate-400 font-mono text-xs">{f.dueDate}</td>
                         </tr>
                       ))}
@@ -499,7 +504,96 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Floating Chatbot Removed */}
+      {/* Floating Chatbot */}
+      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 20 }}
+              className="w-[400px] h-[600px] bg-white/90 backdrop-blur-2xl rounded-[32px] shadow-2xl border border-white/50 overflow-hidden flex flex-col"
+            >
+              <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <MessageSquare size={18} />
+                  </div>
+                  <h4 className="font-bold">Asisten Audit 5R</h4>
+                </div>
+                <button onClick={() => setIsChatOpen(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                {chatHistory.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400">
+                      <MessageSquare size={32} />
+                    </div>
+                    <p className="text-sm font-medium text-slate-500">Tanyakan apa saja tentang hasil audit Anda</p>
+                  </div>
+                ) : (
+                  chatHistory.map((msg, i) => (
+                    <div key={i} className={cn(
+                      "flex flex-col max-w-[85%]",
+                      msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
+                    )}>
+                      <div className={cn(
+                        "p-4 rounded-2xl text-sm leading-relaxed",
+                        msg.role === 'user' 
+                          ? "bg-indigo-600 text-white rounded-tr-none" 
+                          : "bg-slate-100 text-slate-700 rounded-tl-none"
+                      )}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))
+                )}
+                {isChatLoading && (
+                  <div className="flex mr-auto items-start max-w-[85%]">
+                    <div className="bg-slate-100 p-4 rounded-2xl rounded-tl-none">
+                      <Loader2 size={16} className="animate-spin text-indigo-600" />
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="p-4 border-t border-slate-100 bg-white/50">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
+                    placeholder="Tanyakan sesuatu..."
+                    className="w-full pl-4 pr-12 py-3 bg-slate-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                  <button 
+                    onClick={handleChatSend}
+                    disabled={!chatInput.trim() || isChatLoading || !result}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-30 transition-all"
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className={cn(
+            "w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95",
+            isChatOpen ? "bg-white text-indigo-600" : "bg-indigo-600 text-white"
+          )}
+        >
+          {isChatOpen ? <X size={24} /> : <MessageSquare size={24} />}
+        </button>
+      </div>
 
       {/* Global Processing Loader */}
       {isProcessing && (

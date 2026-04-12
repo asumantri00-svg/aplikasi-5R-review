@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import pptxgen from 'pptxgenjs';
-import { Download, Upload, Image as ImageIcon, Plus, Trash2, FileText, ChevronRight, ChevronLeft } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Download, Upload, Image as ImageIcon, Plus, Trash2, FileText, ChevronRight, ChevronLeft, Table as TableIcon, Layout } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { AuditFinding } from '../types';
@@ -31,6 +32,7 @@ export default function PPTGenerator() {
     }
   ]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<'slide' | 'table'>('slide');
   const [monthYear, setMonthYear] = useState(new Date().toLocaleString('id-ID', { month: 'long', year: 'numeric' }));
 
   const currentFinding = findings[currentIndex];
@@ -224,6 +226,25 @@ export default function PPTGenerator() {
     pres.writeFile({ fileName: `Audit_Findings_${monthYear.replace(/ /g, '_')}.pptx` });
   };
 
+  const exportToExcel = () => {
+    const data = findings.map(f => ({
+      'No.': f.no,
+      'Problem': f.problem,
+      'Category': f.category,
+      'Area': f.area,
+      'PIC': f.pic,
+      'Root Cause': f.rootCause,
+      'Action': f.action,
+      'Due Date': f.dueDate,
+      'Status': f.status
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Findings");
+    XLSX.writeFile(wb, `Audit_Findings_${monthYear.replace(/ /g, '_')}.xlsx`);
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 pb-20">
       <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
@@ -232,6 +253,28 @@ export default function PPTGenerator() {
           <p className="text-slate-500">Upload foto bulk untuk membuat banyak slide sekaligus</p>
         </div>
         <div className="flex gap-3">
+          <div className="flex bg-slate-100 p-1 rounded-xl mr-2">
+            <button 
+              onClick={() => setViewMode('slide')}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                viewMode === 'slide' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              <Layout size={18} />
+              Slide
+            </button>
+            <button 
+              onClick={() => setViewMode('table')}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                viewMode === 'table' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              <TableIcon size={18} />
+              Tabel
+            </button>
+          </div>
           <div className="relative">
             <input
               type="file"
@@ -246,6 +289,13 @@ export default function PPTGenerator() {
             </button>
           </div>
           <button
+            onClick={exportToExcel}
+            className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-200"
+          >
+            <FileText size={20} />
+            Export Excel
+          </button>
+          <button
             onClick={generatePPT}
             disabled={findings.length === 0}
             className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50"
@@ -257,7 +307,9 @@ export default function PPTGenerator() {
       </div>
 
       <div className="space-y-8">
-        {/* Navigation & Selector */}
+        {viewMode === 'slide' ? (
+          <>
+            {/* Navigation & Selector */}
           <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
             <div className="flex items-center gap-4">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">PILIH TEMUAN:</label>
@@ -420,7 +472,7 @@ export default function PPTGenerator() {
                   {/* Before */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">FOTO BEFORE</label>
-                    <div className="relative group h-48 border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden hover:border-indigo-400 transition-all bg-slate-900">
+                    <div className="relative group h-48 border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden hover:border-indigo-400 transition-all">
                       {currentFinding.beforeImage ? (
                         <>
                           <img src={currentFinding.beforeImage} className="w-full h-full object-cover" alt="Before" />
@@ -531,7 +583,48 @@ export default function PPTGenerator() {
               </div>
             </div>
           </div>
-        </div>
+        </>
+      ) : (
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                <TableIcon className="text-indigo-600" size={20} />
+                Tabel Temuan Audit - {monthYear}
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-black text-white">
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700 text-center w-12">No.</th>
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700">Problem</th>
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700 text-center w-24">Category</th>
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700">Area</th>
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700">PIC</th>
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700">Root Cause</th>
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700">Action</th>
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider border border-slate-700 text-center w-32">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {findings.map((f, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-4 text-sm text-slate-600 border border-slate-200 text-center font-medium">{f.no}</td>
+                      <td className="px-4 py-4 text-sm text-slate-800 border border-slate-200">{f.problem || '-'}</td>
+                      <td className="px-4 py-4 text-sm text-slate-600 border border-slate-200 text-center">{f.category}</td>
+                      <td className="px-4 py-4 text-sm text-slate-600 border border-slate-200">{f.area || '-'}</td>
+                      <td className="px-4 py-4 text-sm text-slate-600 border border-slate-200">{f.pic || '-'}</td>
+                      <td className="px-4 py-4 text-sm text-slate-600 border border-slate-200">{f.rootCause || '-'}</td>
+                      <td className="px-4 py-4 text-sm text-slate-600 border border-slate-200 whitespace-pre-line">{f.action || '-'}</td>
+                      <td className="px-4 py-4 text-sm text-slate-600 border border-slate-200 text-center">{f.dueDate || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
+    </div>
   );
 }

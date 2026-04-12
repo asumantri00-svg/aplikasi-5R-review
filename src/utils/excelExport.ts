@@ -10,7 +10,7 @@ export function exportToExcel(result: AISummary, fileName: string = 'Audit_Findi
     'Problem': f.problem,
     'Category': f.category,
     'Area': f.area,
-    'PIC': f.pic,
+    'PIC': f.pic || '-',
     'Root Cause': f.rootCause,
     'Action': f.action,
     'Due Date': f.dueDate
