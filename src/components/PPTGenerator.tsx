@@ -247,63 +247,67 @@ export default function PPTGenerator() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 pb-20">
-      <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Audit 5R</h2>
-          <p className="text-slate-500">Upload foto bulk untuk membuat banyak slide sekaligus</p>
+      <div className="flex justify-between items-center bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold text-slate-800">Audit 5R</h2>
+          <p className="text-slate-500 text-lg">Upload foto bulk untuk membuat banyak slide sekaligus</p>
         </div>
-        <div className="flex gap-3">
-          <div className="flex bg-slate-100 p-1 rounded-xl mr-2">
-            <button 
-              onClick={() => setViewMode('slide')}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
-                viewMode === 'slide' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              <Layout size={18} />
-              Slide
-            </button>
-            <button 
-              onClick={() => setViewMode('table')}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
-                viewMode === 'table' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              <TableIcon size={18} />
-              Tabel
-            </button>
-          </div>
+        <div className="flex items-center gap-4">
           <div className="relative">
             <input
               type="file"
               multiple
               accept="image/*"
               onChange={handleBulkBeforeUpload}
-              className="absolute inset-0 opacity-0 cursor-pointer"
+              className="absolute inset-0 opacity-0 cursor-pointer z-10"
             />
-            <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200">
-              <Plus size={20} />
+            <button className="flex items-center gap-2 px-8 py-4 bg-[#009661] text-white rounded-2xl font-bold hover:bg-[#007d51] transition-all shadow-lg shadow-emerald-100">
+              <Plus size={24} />
               Upload Foto
             </button>
           </div>
           <button
-            onClick={exportToExcel}
-            className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-200"
-          >
-            <FileText size={20} />
-            Export Excel
-          </button>
-          <button
             onClick={generatePPT}
             disabled={findings.length === 0}
-            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50"
+            className="flex items-center gap-2 px-8 py-4 bg-[#4f46e5] text-white rounded-2xl font-bold hover:bg-[#4338ca] disabled:opacity-50 transition-all shadow-lg shadow-indigo-100"
           >
-            <Download size={20} />
+            <Download size={24} />
             Download PPT
           </button>
         </div>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+          <button 
+            onClick={() => setViewMode('slide')}
+            className={cn(
+              "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all",
+              viewMode === 'slide' ? "bg-white shadow-md text-indigo-600" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Layout size={18} />
+            Slide
+          </button>
+          <button 
+            onClick={() => setViewMode('table')}
+            className={cn(
+              "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all",
+              viewMode === 'table' ? "bg-white shadow-md text-indigo-600" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <TableIcon size={18} />
+            Tabel
+          </button>
+        </div>
+        
+        <button
+          onClick={exportToExcel}
+          className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-sm"
+        >
+          <FileText size={18} />
+          Export Excel
+        </button>
       </div>
 
       <div className="space-y-8">
