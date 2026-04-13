@@ -4,7 +4,7 @@ import { AISummary, ChatMessage, AuditFilePart } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISummary> {
-  console.log("Analyzing audit files with Gemini...");
+  console.log("Analyzing audit files with Gemini (Data Only Mode)...");
 
   try {
     const response = await ai.models.generateContent({
@@ -12,23 +12,19 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
       contents: {
         parts: [
           {
-            text: `You are an expert Audit 5R Analyst. Your task is to extract audit findings from the provided documents (text or images).
+            text: `Extract audit findings from the provided documents. Focus strictly on the data.
             
-            Extract the following fields for each finding:
-            - no: The finding number
+            Fields to extract for each finding:
+            - no: Finding number
             - problem: Description of the issue
-            - category: 5R category (R1, R2, R3, R4, R5) or similar
-            - area: Location where the finding was found
+            - category: 5R category (R1-R5)
+            - area: Location
             - pic: Person in charge
-            - rootCause: The underlying cause of the problem
-            - action: Corrective and preventive actions
-            - dueDate: Deadline for completion
+            - rootCause: Underlying cause
+            - action: Corrective/preventive actions
+            - dueDate: Deadline
             
-            Also provide:
-            - summaryText: A brief executive summary of the audit results.
-            - suggestions: 3 actionable suggestions based on the findings.
-            
-            Return the data in JSON format.`
+            Return ONLY the findings in JSON format.`
           },
           ...parts.map(part => {
             if ('inlineData' in part) {
@@ -65,14 +61,9 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
                 },
                 required: ["no", "problem", "category", "area", "pic", "rootCause", "action", "dueDate"]
               }
-            },
-            summaryText: { type: Type.STRING },
-            suggestions: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
             }
           },
-          required: ["findings", "summaryText", "suggestions"]
+          required: ["findings"]
         }
       }
     });
@@ -94,7 +85,9 @@ export async function analyzeAuditFiles(parts: AuditFilePart[]): Promise<AISumma
     });
 
     return {
-      ...result,
+      findings: result.findings,
+      summaryText: `Berhasil mengekstrak ${result.findings.length} temuan audit.`,
+      suggestions: [],
       categoryDistribution: Object.entries(categoryMap).map(([name, value]) => ({ name, value })),
       areaDistribution: Object.entries(areaMap).map(([name, value]) => ({ name, value })),
       picDistribution: Object.entries(picMap).map(([name, value]) => ({ name, value }))

@@ -321,37 +321,6 @@ export default function App() {
               </div>
             </section>
 
-            {/* Summary and Insights Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/50 p-8 shadow-xl shadow-slate-200/50 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-                    <FileText size={18} />
-                  </div>
-                  <h3 className="font-bold text-slate-800">Ringkasan Audit 5R 1S</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-sm">
-                  {result ? result.summaryText : "Unggah data untuk melihat ringkasan eksekutif dari temuan audit."}
-                </p>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/50 p-8 shadow-xl shadow-slate-200/50 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
-                    <Lightbulb size={18} />
-                  </div>
-                  <h3 className="font-bold text-slate-800">Wawasan</h3>
-                </div>
-                <div className="text-slate-600 leading-relaxed text-sm">
-                  {result ? (
-                    <p>{result.suggestions[0] || "Tidak ada wawasan tersedia."}</p>
-                  ) : (
-                    <p className="text-slate-400 italic">Tidak ada wawasan tersedia. Silakan unggah dokumen audit.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
             {/* Table Section */}
             {result && (
               <div className="bg-white/70 backdrop-blur-lg rounded-3xl border border-white/50 overflow-hidden shadow-xl shadow-slate-200/50">
